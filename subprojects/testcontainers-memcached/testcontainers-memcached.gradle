@@ -1,7 +1,7 @@
 dependencies {
     api 'org.testcontainers:testcontainers'
     api project(':testcontainers-redis-common')
-    testImplementation group: 'net.spy', name: 'spymemcached', version: spymemcachedVersion
+    testImplementation libs.spymemcached
     testImplementation 'org.awaitility:awaitility'
     testImplementation project(':testcontainers-redis-test')
 }

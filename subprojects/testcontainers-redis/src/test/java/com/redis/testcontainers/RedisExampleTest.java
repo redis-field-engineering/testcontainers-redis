@@ -20,8 +20,8 @@ class RedisExampleTest {
     void testSomethingUsingLettuce() {
         // Retrieve the Redis URI from the container
         String redisURI = container.getRedisURI();
-        RedisClient client = RedisClient.create(redisURI);
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (RedisClient client = RedisClient.create(redisURI);
+                StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisCommands<String, String> commands = connection.sync();
             Assertions.assertEquals("PONG", commands.ping());
         }

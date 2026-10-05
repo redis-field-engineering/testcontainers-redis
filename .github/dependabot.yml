@@ -6,6 +6,10 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "build(deps)"
+    ignore:
+      # These artifacts predate 0.8.2 despite their higher version numbers.
+      - dependency-name: "com.redis:redis-enterprise-admin"
+        versions: ["2.2.1", "2.2.2"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

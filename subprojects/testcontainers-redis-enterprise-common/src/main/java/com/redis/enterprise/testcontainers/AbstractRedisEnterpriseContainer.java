@@ -12,7 +12,6 @@ import org.testcontainers.containers.output.FrameConsumerResultCallback;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.ToStringConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.shaded.org.apache.commons.lang3.ClassUtils;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.TestEnvironment;
 
@@ -107,7 +106,7 @@ public abstract class AbstractRedisEnterpriseContainer<T extends AbstractRedisEn
 
 	@Override
 	public String toString() {
-		return ClassUtils.getShortClassName(getClass());
+		return getClass().getSimpleName();
 	}
 
 	protected abstract String getAdminPassword();

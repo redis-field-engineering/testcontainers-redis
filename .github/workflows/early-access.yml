@@ -10,6 +10,8 @@ jobs:
     if: github.repository == 'redis-field-engineering/testcontainers-redis' && startsWith(github.event.head_commit.message, 'Releasing version') != true
     uses: redis-field-engineering/redis-github-workflows/.github/workflows/early-access.yml@main
     with:
+      java-version: '25'
+      jreleaser-version: '1.26.0'
       jreleaser-arguments: full-release
     secrets:
       github-user: ${{ secrets.GIT_USER }}

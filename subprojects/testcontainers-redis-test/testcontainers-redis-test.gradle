@@ -1,14 +1,8 @@
-config {
-    testing {
-        jar = true
-    }
-}
-
 dependencies {
-    implementation project(':testcontainers-redis-common')
+    api project(':testcontainers-redis-common')
     implementation 'org.awaitility:awaitility'
-    implementation 'org.junit.jupiter:junit-jupiter-api'
-    implementation 'org.testcontainers:junit-jupiter'
-    implementation group: 'com.redis', name: 'lettucemod', version: lettucemodVersion
-    implementation group: 'net.spy', name: 'spymemcached', version: spymemcachedVersion
+    api 'org.junit.jupiter:junit-jupiter-api'
+    implementation 'org.testcontainers:testcontainers-junit-jupiter'
+    implementation libs.lettucemod
+    implementation libs.spymemcached
 }

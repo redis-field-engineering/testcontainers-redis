@@ -2,7 +2,6 @@ package com.redis.testcontainers;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.shaded.org.apache.commons.lang3.ClassUtils;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
@@ -31,7 +30,7 @@ abstract class AbstractRedisContainer<C extends AbstractRedisContainer<C>> exten
 
 	@Override
 	public String toString() {
-		return ClassUtils.getShortClassName(getClass());
+		return getClass().getSimpleName();
 	}
 
 	@Override
