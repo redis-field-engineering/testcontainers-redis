@@ -45,6 +45,7 @@ release:
         - search: 'deps: '
 
 signing:
+  active: ALWAYS
   pgp:
     active: ALWAYS
     armored: true
