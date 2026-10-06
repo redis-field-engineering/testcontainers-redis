@@ -3,13 +3,41 @@
 :project-owner:   redis-field-engineering
 :project-name:    testcontainers-redis
 :project-group:   com.redis
-:project-version: 2.2.4
+:project-version: 3.0.0-SNAPSHOT
 
 image:https://github.com/{project-owner}/{project-name}/actions/workflows/early-access.yml/badge.svg["Build Status",link="https://github.com/{project-owner}/{project-name}/actions"]
 image:https://img.shields.io/maven-central/v/{project-group}/{project-name}[Download,link="https://search.maven.org/#search|ga|1|{project-name}"]
 image:https://img.shields.io/github/license/{project-owner}/{project-name}["License",link="https://github.com/{project-owner}/{project-name}"]
 
 Testcontainers Redis is an extension of Testcontainers that supports Redis (Standalone and Cluster), Redis Modules, and Redis Enterprise containers.
+
+== Building and Compatibility
+
+The 3.x development line uses Spring Boot 4.1 dependency management,
+Testcontainers 2, and JUnit 6. Java 17 remains the minimum supported version.
+The libraries are regular JARs; the Spring Boot BOM supplies dependency versions
+without applying Spring Boot application packaging.
+
+Build with the Gradle wrapper and a JDK 17 or newer:
+
+[source,shell]
+----
+./gradlew build aggregateTestReports aggregateJacocoReport
+./gradlew publish
+----
+
+Docker must be running for Redis, Redis Stack, and Memcached integration tests.
+Redis Enterprise container tests run on Linux. Tests against an external Redis
+Enterprise installation require the `REDIS_ENTERPRISE_HOST` environment variable.
+The `publish` task only stages artifacts under `build/repos/local/release`;
+it does not upload them to Maven Central.
+
+Dependency versions are maintained in `gradle/libs.versions.toml`. Dependabot
+checks the catalog, Gradle wrapper, and this repository's GitHub Actions weekly.
+The shared release workflows are maintained in `redis-field-engineering/redis-github-workflows`.
+
+This branch builds `3.0.0-SNAPSHOT`; build and publish to Maven Local with
+`./gradlew publishToMavenLocal` to try it before a release.
 
 == Getting Started
 
@@ -51,8 +79,8 @@ class RedisExampleTest {
     void testSomethingUsingLettuce() {
         // Retrieve the Redis URI from the container
         String redisURI = container.getRedisURI();
-        RedisClient client = RedisClient.create(redisURI);
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (RedisClient client = RedisClient.create(redisURI);
+                StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisCommands<String, String> commands = connection.sync();
             Assertions.assertEquals("PONG", commands.ping());
         }
@@ -75,11 +103,11 @@ class RedisStackExampleTest {
     void testSomethingUsingLettuceMod() {
         // Retrieve the Redis URI from the container
         String redisURI = container.getRedisURI();
-        RedisModulesClient client = RedisModulesClient.create(redisURI);
-        try (StatefulRedisModulesConnection<String, String> connection = client.connect()) {
+        try (RedisModulesClient client = RedisModulesClient.create(redisURI);
+                StatefulRedisModulesConnection<String, String> connection = client.connect()) {
             RedisModulesCommands<String, String> commands = connection.sync();
-            commands.ftCreate("myIndex", Field.tag("myField").build());
-            IndexInfo indexInfo = RedisModulesUtils.indexInfo(commands.ftInfo("myIndex"));
+            commands.ftCreate("myIndex", List.of(TagFieldArgs.<String>builder().name("myField").build()));
+            IndexInfo indexInfo = IndexInfo.parse(commands.ftInfo("myIndex"));
             Assertions.assertEquals(1, indexInfo.getFields().size());
             Assertions.assertEquals("myField", indexInfo.getFields().get(0).getName());
         }

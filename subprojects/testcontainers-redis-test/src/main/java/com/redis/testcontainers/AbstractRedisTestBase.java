@@ -1,8 +1,11 @@
 package com.redis.testcontainers;
 
+import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,17 +16,16 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.testcontainers.lifecycle.Startable;
 
 import com.redis.lettucemod.RedisModulesClient;
-import com.redis.lettucemod.RedisModulesUtils;
 import com.redis.lettucemod.api.StatefulRedisModulesConnection;
 import com.redis.lettucemod.api.sync.RedisModulesCommands;
 import com.redis.lettucemod.cluster.RedisModulesClusterClient;
-import com.redis.lettucemod.search.Field;
-import com.redis.lettucemod.search.SearchResults;
 import com.redis.lettucemod.timeseries.CreateOptions;
 import com.redis.lettucemod.timeseries.Sample;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.search.arguments.TagFieldArgs;
+import io.lettuce.core.search.arguments.TextFieldArgs;
 
 @TestInstance(Lifecycle.PER_CLASS)
 @SuppressWarnings("unchecked")
@@ -42,16 +44,16 @@ public abstract class AbstractRedisTestBase {
 		if (redis instanceof Startable) {
 			((Startable) redis).start();
 		}
-		client = client(redis);
-		connection = RedisModulesUtils.connection(client);
-		commands = connection.sync();
-	}
-
-	private AbstractRedisClient client(RedisServer redis) {
 		if (redis.isRedisCluster()) {
-			return RedisModulesClusterClient.create(redis.getRedisURI());
+			RedisModulesClusterClient clusterClient = RedisModulesClusterClient.create(redis.getRedisURI());
+			client = clusterClient;
+			connection = clusterClient.connect();
+		} else {
+			RedisModulesClient standaloneClient = RedisModulesClient.create(redis.getRedisURI());
+			client = standaloneClient;
+			connection = standaloneClient.connect();
 		}
-		return RedisModulesClient.create(redis.getRedisURI());
+		commands = connection.sync();
 	}
 
 	@AfterAll
@@ -80,7 +82,8 @@ public abstract class AbstractRedisTestBase {
 
 	@Test
 	void search() {
-		commands.ftCreate("test", Field.text("name").build(), Field.tag("id").build());
+		commands.ftCreate("test", List.of(TextFieldArgs.<String>builder().name("name").build(),
+				TagFieldArgs.<String>builder().name("id").build()));
 		int count = 10;
 		for (int index = 0; index < count; index++) {
 			Map<String, String> doc = new HashMap<>();
@@ -88,8 +91,8 @@ public abstract class AbstractRedisTestBase {
 			doc.put("id", String.valueOf(index + 1));
 			commands.hset("hash:" + index, doc);
 		}
-		SearchResults<String, String> results = commands.ftSearch("test", "*");
-		Assertions.assertEquals(count, results.getCount());
+		Awaitility.await().atMost(Duration.ofSeconds(10))
+				.untilAsserted(() -> Assertions.assertEquals(count, commands.ftSearch("test", "*").getCount()));
 	}
 
 	@Test

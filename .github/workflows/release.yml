@@ -20,6 +20,8 @@ jobs:
     name: Release
     uses: redis-field-engineering/redis-github-workflows/.github/workflows/release.yml@main
     with:
+      java-version: '25'
+      jreleaser-version: '1.26.0'
       branch: ${{ github.event.inputs.branch }}
       version: ${{ github.event.inputs.version }}
       tasks: ${{ github.event.inputs.tasks }}

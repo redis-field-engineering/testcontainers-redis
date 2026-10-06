@@ -1,111 +1,211 @@
-config {
-    info {
-        description = 'Testcontainers Redis'
-        inceptionYear = '2020'
-        vendor = 'Redis'
-        tags = ['testcontainers', 'redis']
+import java.util.zip.ZipFile
 
-        links {
-            website      = "https://github.com/redis-field-engineering/${project.rootProject.name}"
-            issueTracker = "https://github.com/redis-field-engineering/${project.rootProject.name}/issues"
-            scm          = "https://github.com/redis-field-engineering/${project.rootProject.name}.git"
-        }
-
-        scm {
-            url                 = "https://github.com/redis-field-engineering/${project.rootProject.name}"
-            connection          = "scm:git:https://github.com/redis-field-engineering/${project.rootProject.name}.git"
-            developerConnection = "scm:git:git@github.com:redis-field-engineering/${project.rootProject.name}.git"
-        }
-
-        specification {
-            enabled = true
-        }
-
-        implementation {
-            enabled = true
-        }
-        
-        people {
-            clearDomainSet()
-            person {
-                id    = 'jruaux'
-                name  = 'Julien Ruaux'
-                roles = ['developer', 'author']
-            }
-        }
-    }
-
-    docs {
-        javadoc {
-            autoLinks {
-                enabled = false
-            }
-        }
-    }
-    
-    licensing {
-        enabled = false
-    }
-
-    coverage {
-        jacoco {
-            enabled = true
-            toolVersion = jacocoPluginVersion
-        }
-    }
+plugins {
+    id 'base'
+    id 'jacoco'
 }
 
+def projectVersion = file('VERSION').text.trim()
+def projectUrl = 'https://github.com/redis-field-engineering/testcontainers-redis'
+
 allprojects {
+    group = 'com.redis'
+    version = projectVersion
+
     repositories {
-        mavenLocal()
-        gradlePluginPortal()
-    }
-
-    tasks.withType(GenerateModuleMetadata) {
-        enabled = false
-    }
-
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
+        mavenCentral()
     }
 }
 
 subprojects {
-    config {
-        info {
-            description = project.project_description
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'jacoco'
+    apply plugin: 'eclipse'
+
+    description = project.project_description.replace('"', '')
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        enabled = false
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 17
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
+        options.addBooleanOption('notimestamp', true)
+    }
+
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+
+    tasks.withType(Jar).configureEach {
+        from(rootProject.file('LICENSE')) {
+            into 'META-INF'
         }
-        coverage {
-            jacoco {
-		        toolVersion = jacocoPluginVersion
+        manifest.attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Redis',
+            'Specification-Title': project.name,
+            'Specification-Version': project.version,
+            'Specification-Vendor': 'Redis'
+        )
+    }
+
+    dependencies {
+        api platform(rootProject.libs.spring.boot.bom)
+        testImplementation 'org.junit.jupiter:junit-jupiter-api'
+        testImplementation 'org.junit.jupiter:junit-jupiter-params'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        testRuntimeOnly 'org.slf4j:slf4j-simple'
+        testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
+    jacoco {
+        toolVersion = rootProject.libs.versions.jacoco.get()
+    }
+
+    publishing {
+        publications {
+            main(MavenPublication) {
+                from components.java
+                versionMapping {
+                    usage('java-api') { fromResolutionOf('runtimeClasspath') }
+                    usage('java-runtime') { fromResolutionResult() }
+                }
+                pom {
+                    name = project.name
+                    description = project.description
+                    url = projectUrl
+                    inceptionYear = '2020'
+                    licenses {
+                        license {
+                            name = 'Apache-2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution = 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'jruaux'
+                            name = 'Julien Ruaux'
+                            roles = ['developer', 'author']
+                        }
+                    }
+                    scm {
+                        url = projectUrl
+                        connection = "scm:git:${projectUrl}.git"
+                        developerConnection = 'scm:git:git@github.com:redis-field-engineering/testcontainers-redis.git'
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                name = 'localRelease'
+                url = rootProject.layout.buildDirectory.dir('repos/local/release')
             }
         }
     }
-    
-    license {
-        exclude('build/**')
-    }
-    
-    dependencies {
-        testImplementation 'org.junit.jupiter:junit-jupiter-api'
-        testImplementation 'org.junit.jupiter:junit-jupiter-params'
-        testImplementation 'org.junit.jupiter:junit-jupiter-engine'
-        testImplementation 'org.junit.platform:junit-platform-launcher'
-        testImplementation 'org.slf4j:slf4j-simple'
-        testImplementation 'org.testcontainers:junit-jupiter'
+
+    def pomProperties = tasks.register('writePomProperties', WriteProperties) {
+        destinationFile = layout.buildDirectory.file('generated/pom.properties')
+        property('groupId', project.group.toString())
+        property('artifactId', project.name)
+        property('version', project.version.toString())
     }
 
-    test {
-        useJUnitPlatform()
-    }
-    
-    bootJar {
-        enabled = false
-    }
-    
-    jar {
-        enabled = true
-        archiveClassifier = ''
+    tasks.named('jar') {
+        into("META-INF/maven/${project.group}/${project.name}") {
+            from(tasks.named('generatePomFileForMainPublication')) {
+                rename 'pom-default.xml', 'pom.xml'
+            }
+            from(pomProperties)
+        }
     }
 
+    // Keep the compile/runtime classpath check previously enforced by Kordamp.
+    def checkDuplicateClasses = tasks.register('checkDuplicateClasses') {
+        group = 'verification'
+        def classpaths = [configurations.compileClasspath, configurations.runtimeClasspath]
+        inputs.files(classpaths)
+        doLast {
+            classpaths.each { classpath ->
+                def owners = [:]
+                def registerClass = { String name, File owner ->
+                    if (name.endsWith('.class') && !name.endsWith('module-info.class')) {
+                        def previous = owners.putIfAbsent(name, owner)
+                        if (previous != null) {
+                            throw new GradleException("Duplicate class ${name} in ${classpath.name}: ${previous} and ${owner}")
+                        }
+                    }
+                }
+                classpath.files.each { entry ->
+                    if (entry.isDirectory()) {
+                        fileTree(entry).matching { include '**/*.class' }.each { classFile ->
+                            registerClass(entry.toPath().relativize(classFile.toPath()).toString(), entry)
+                        }
+                    } else if (entry.name.endsWith('.jar')) {
+                        new ZipFile(entry).withCloseable { jar ->
+                            jar.entries().each { registerClass(it.name, entry) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    tasks.named('check') {
+        dependsOn checkDuplicateClasses
+    }
+
+    // Preserve the published test JARs previously supplied by Kordamp.
+    if (name in ['testcontainers-redis-common', 'testcontainers-redis-test']) {
+        def testJar = tasks.register('testJar', Jar) {
+            archiveClassifier = 'tests'
+            from sourceSets.test.output
+        }
+        publishing.publications.main.artifact(testJar)
+    }
+}
+
+tasks.named('build') {
+    dependsOn subprojects.collect { it.tasks.named('build') }
+}
+
+tasks.register('aggregateTestReports', TestReport) {
+    destinationDirectory = layout.buildDirectory.dir('reports/aggregate-tests')
+    testResults.from(subprojects.collect { it.tasks.named('test').flatMap { test -> test.binaryResultsDirectory } })
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+tasks.register('aggregateJacocoReport', JacocoReport) {
+    dependsOn subprojects.collect { it.tasks.named('test') }
+    executionData.from(subprojects.collect { it.layout.buildDirectory.file('jacoco/test.exec') })
+    sourceDirectories.from(subprojects.collect { it.sourceSets.main.allSource.srcDirs })
+    classDirectories.from(subprojects.collect { it.sourceSets.main.output })
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }

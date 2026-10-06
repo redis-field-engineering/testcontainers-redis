@@ -1,0 +1,14 @@
+[versions]
+spring-boot = "4.1.1"
+jacoco = "0.8.15"
+lettucemod = "4.5.0"
+# 0.8.2 (2025) supersedes the older 2.2.2 artifact (2024).
+redis-enterprise-admin = "0.8.2"
+spymemcached = "2.12.3"
+
+[libraries]
+jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+lettucemod = { module = "com.redis:lettucemod", version.ref = "lettucemod" }
+redis-enterprise-admin = { module = "com.redis:redis-enterprise-admin", version.ref = "redis-enterprise-admin" }
+spymemcached = { module = "net.spy:spymemcached", version.ref = "spymemcached" }

@@ -46,16 +46,16 @@ release:
 
 signing:
   active: ALWAYS
-  armored: true
+  pgp:
+    active: ALWAYS
+    armored: true
 
 deploy:
   maven:
-    nexus2:
-      maven-central:
+    mavenCentral:
+      sonatype:
         active: RELEASE
-        url: https://s01.oss.sonatype.org/service/local
-        closeRepository: true
-        releaseRepository: true
+        url: https://central.sonatype.com/api/v1/publisher
         stagingRepositories:
           - build/repos/local/release
 

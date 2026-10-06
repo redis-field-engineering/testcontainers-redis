@@ -1,7 +1,8 @@
 dependencies {
     api 'org.testcontainers:testcontainers'
     api project(':testcontainers-redis-common')
-    testImplementation group: 'com.redis', name: 'lettucemod', version: lettucemodVersion 
+    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.lettucemod
     testImplementation project(':testcontainers-redis-test')
 }
 
