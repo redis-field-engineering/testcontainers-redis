@@ -36,8 +36,8 @@ Dependency versions are maintained in `gradle/libs.versions.toml`. Dependabot
 checks the catalog, Gradle wrapper, and this repository's GitHub Actions weekly.
 The shared release workflows are maintained in `redis-field-engineering/redis-github-workflows`.
 
-This branch builds `3.0.0-SNAPSHOT`; build and publish to Maven Local with
-`./gradlew publishToMavenLocal` to try it before a release.
+For development snapshots, build and publish to Maven Local with
+`./gradlew publishToMavenLocal` to try changes before a release.
 
 == Getting Started
 
