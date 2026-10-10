@@ -1,7 +1,10 @@
 package com.redis.testcontainers;
 
+import java.time.Duration;
+
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
@@ -17,7 +20,11 @@ abstract class AbstractRedisContainer<C extends AbstractRedisContainer<C>> exten
 	protected AbstractRedisContainer(final DockerImageName dockerImageName) {
 		super(dockerImageName);
 		addExposedPorts(REDIS_PORT);
-		waitingFor(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1));
+		// The log message signals readiness inside the container.
+		// The port check ensures the host-mapped port is reachable too.
+		waitingFor(new WaitAllStrategy()
+				.withStrategy(Wait.forLogMessage(".*Ready to accept connections.*\\n", 1))
+				.withStrategy(Wait.forListeningPorts(REDIS_PORT)).withStartupTimeout(Duration.ofSeconds(60)));
 	}
 
 	@SuppressWarnings("unchecked")
