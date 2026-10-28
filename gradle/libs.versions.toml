@@ -2,8 +2,7 @@
 spring-boot = "4.1.1"
 jacoco = "0.8.15"
 lettucemod = "4.5.0"
-# 0.8.2 (2025) supersedes the older 2.2.2 artifact (2024).
-redis-enterprise-admin = "0.8.2"
+redis-enterprise-admin = "0.8.3"
 spymemcached = "2.12.3"
 
 [libraries]
