@@ -1,6 +1,6 @@
 [versions]
 spring-boot = "4.1.2"
-jacoco = "0.8.15"
+jacoco = "0.8.16"
 lettucemod = "4.5.0"
 redis-enterprise-admin = "0.8.3"
 spymemcached = "2.12.3"
